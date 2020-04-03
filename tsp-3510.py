@@ -25,6 +25,7 @@ print(time, inputFile, outputFile)
 tsp(inputFile, outputFile, time)
 
 def tsp(input_coor, output-tour, time):
+    dists = pdist(allNodes)
 
     print('function goes here')
 
@@ -54,5 +55,13 @@ def get_pdist(n1, n2, arr, numNodes):
     else:
         base = sumtorial(numNodes - 1) - sumtorial(numNodes - minNode)
 
-    return arr[base + maxNode]
+    return arr[base + maxNode - minNode - 1]
+
+def get_cost(tour, arr, numNodes):
+    cost = 0
+    for i in range(len(tour) - 1):
+        cost += get_pdist(tour[i], tour[i+1], arr, numNodes)
+
+    return cost
+
 
