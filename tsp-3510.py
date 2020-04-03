@@ -6,25 +6,26 @@ import sys
 inputFile = sys.argv[1]
 outputFile = sys.argv[2]
 time = sys.argv[3]
-arr = []
+allNodes = []
 cost = 29
 file = open(inputFile, 'r')
 for line in file:
     fields = line.split(" ")
-    arr.append((float(fields[1]),float(fields[2])))
+    allNodes.append((float(fields[1]),float(fields[2])))
 file.close()
 
 file = open(outputFile, 'w')
 file.write(str(cost)+'\n')
-file.write(str(arr))
+file.write(str(allNodes))
 file.close()
 
 print(time, inputFile, outputFile)
-# print(arr)
+# print(allNodes)
 
 tsp(inputFile, outputFile, time)
 
 def tsp(input_coor, output-tour, time):
+
     print('function goes here')
 
 
