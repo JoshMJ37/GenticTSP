@@ -8,7 +8,7 @@ cost = 29
 file = open(inputFile, 'r')
 for line in file:
 	fields = line.split(" ")
-	arr.append((int(float(fields[1])),int(float(fields[2]))))
+	arr.append((float(fields[1]),float(fields[2])))
 file.close()
 
 file = open(outputFile, 'w') 
