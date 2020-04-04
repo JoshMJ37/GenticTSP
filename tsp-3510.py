@@ -2,32 +2,51 @@ import numpy
 import scipy
 from scipy.spatial.distance import pdist
 import sys
+import tsp
 
-inputFile = sys.argv[1]
-outputFile = sys.argv[2]
-time = sys.argv[3]
-allNodes = []
-cost = 29
-file = open(inputFile, 'r')
-for line in file:
-    fields = line.split(" ")
-    allNodes.append((float(fields[1]),float(fields[2])))
-file.close()
+POP_SIZE = 20
 
-file = open(outputFile, 'w')
-file.write(str(cost)+'\n')
-file.write(str(allNodes))
-file.close()
+def tspGenetic(allNodes, outputFile, time):
+    dists = np.round(pdist(allNodes))
+    gen = 1
+    gen_thresh = 100
 
-print(time, inputFile, outputFile)
-# print(allNodes)
+    population = [[[],None] for _ in range(POP_SIZE)]
 
-tsp(inputFile, outputFile, time)
+    for i in POP_SIZE:
+        tour = tsp.create_gnome()
+        population[i] = [tour, tsp.cal_fitness(tour)]
 
-def tsp(input_coor, output-tour, time):
-    dists = pdist(allNodes)
+    found = False
+    temp = 10000
 
-    print('function goes here')
+    while temp > 1000 and gen <= gen_thresh:
+        population.sort(key=lambda x: x[1])
+        newPop = [[[],None] for _ in range(POP_SIZE)]
+
+        for i in range(POP_SIZE):
+            p1 = population[i]
+
+            while(True):
+                new_tour = tsp.mutatedGene(p1[1])
+                ntF = cal_fitness(new_tour)
+
+                if ntF <= population[i][1]:
+                    newPop[i] = [new_tour, ntF]
+                    break
+                else:
+                    prob = pow(2.7, -1*(ntF - population[i][1])) / temp
+
+                    if prob > 0.5:
+                        newPop[i] = [new_tour, ntF]
+
+        temp = np.round(temp * 0.9)
+        population = np.array(newPop).tolist()
+
+    population.sort(key=lambda x: x[1])
+    print(f"Min tour cost: {population[0][1]}")
+    print(f"Tour:\n{population[0][0]}")
+
 
 
 
@@ -65,3 +84,22 @@ def get_cost(tour, arr, numNodes):
     return cost
 
 
+if __name__ == '__main__':
+    inputFile = sys.argv[1]
+    outputFile = sys.argv[2]
+    time = sys.argv[3]
+    allNodes = []
+    # cost = None
+    file = open(inputFile, 'r')
+    for line in file:
+        fields = line.split(" ")
+        allNodes.append((float(fields[1]),float(fields[2])))
+    file.close()
+
+    file = open(outputFile, 'w')
+    file.write(str(cost)+'\n')
+    file.write(str(allNodes))
+    file.close()
+
+    print(time, inputFile, outputFile)
+    tsp(allNodes, outputFile, time)
