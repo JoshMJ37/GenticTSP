@@ -1,52 +1,50 @@
 import numpy as np
-import scipy
-from scipy.spatial.distance import pdist
 import sys
-
 import time
+from TSP import GeneticUtil
 
-POP_SIZE = 5
-numMutes = 3
-prob_thresh = 0.01
+POP_SIZE = 10
+NUM_GENS = 100
+elitism = 1
 
-def tspGenetic(allNodes, outputFile, time):
-    dists = np.round(pdist(allNodes))
-    numNodes = len(allNodes)
-    gen = 1
-    gen_thresh = 100
+numMutes = 1
+prob_thresh = 0.001
+
+def tspGenetic(genU, outputFile, time):
 
     population = [[[],None] for _ in range(POP_SIZE)]
 
     for i in range(POP_SIZE):
-        tour = createGnome(numNodes)
-        population[i] = [tour, get_cost(tour, dists)]
+        tour = genU.createGnome()
+        population[i] = [tour, genU.get_cost(tour)]
+
 
     temp = 10000
 
-    while temp > 1000 and gen <= gen_thresh:
+    for gen in range(NUM_GENS):
         population.sort(key=lambda x: x[1])
         print(f"\nGeneration: {gen}")
         print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
-        for i in range(POP_SIZE):
-            p1 = population[i]
+        if elitism:
+            newPop[:elitism] = population[:elitism]
+
+        for i in range(elitism, POP_SIZE):
+            p1 = population[i][0]
+
 
             while(True):
-                new_tour = mutatedGene(p1[0])
+                new_tour = genU.mutatedGene(p1)
                 for j in range(numMutes):
-                    new_tour = mutatedGene(new_tour)
-                ntF = get_cost(new_tour, dists)
+                    new_tour = genU.mutatedGene(new_tour)
+                ntF = genU.get_cost(new_tour)
+                # ntF, ntCL = get_cost2(new_tour, dists)
 
                 # if ntF <= np.max(np.array(population)[:, 1]):
                 if ntF <= population[i][1]:
                     newPop[i] = [new_tour, ntF]
                     break
-                else:
-                    prob = pow(2.7, -1*(ntF - population[i][1]) / temp)
-
-                    if prob > prob_thresh:
-                        newPop[i] = [new_tour, ntF]
 
         temp = np.round(temp * 0.9)
         population = np.array(newPop).tolist()
@@ -59,77 +57,16 @@ def tspGenetic(allNodes, outputFile, time):
     return cost, population[0][0]
 
 
-def memoize(f):
-    memo = {}
-    def helper(x):
-        if x not in memo:
-            memo[x] = f(x)
-        return memo[x]
-    return helper
-
-@memoize
-def sumtorial(n):
-    if n <= 1:
-        return n
-    else:
-        return n + sumtorial(n-1)
-
-def get_pdist(n1, n2, arr, numNodes):
-    minNode = min(n1, n2)
-    maxNode = max(n1, n2)
-
-    if minNode == 1:
-        base = 0
-    else:
-        base = sumtorial(numNodes - 1) - sumtorial(numNodes - minNode)
-
-    return arr[base + maxNode - minNode - 1]
-
-def get_cost(tour, arr):
-    cost = 0
-    numNodes = len(tour) - 1
-    for i in range(len(tour) - 1):
-        cost += get_pdist(tour[i], tour[i+1], arr, numNodes)
-
-    return cost
-
-# def repeat(path, tar, rem):
-#     # for i in range(len(path)):
-#     #     if (path[i] == tar):
-#     #         return True
-#     # return False
-
-#     for i in range(len(path)):
-#         if (path[i] == tar):
-#             return True
-#     return False
-
-
-#returns a randomly mutated path
-def mutatedGene(path):
-    n = len(path) - 1
-    rand1 = np.random.randint(1, n)
-    rand2 = np.random.randint(1, n)
-    while(rand1 == rand2):
-        rand2 = np.random.randint(1, n)
-    temp = path[rand1]
-    path[rand1] = path[rand2]
-    path[rand2] = temp
-    return path
-
-def createGnome(numNodes):
-    gnome = [1]
-    rem = np.arange(1, numNodes)+ 1
-
-    while (len(rem)):
-        temp = np.random.randint(len(rem))
-
-        gnome.append(rem[temp])
-        rem = np.delete(rem, temp)
-
-    gnome.append(1)
-    return gnome
-
+def breed(p1, p2, child):
+    ind = 0
+    for item in p2:
+        if item not in child:
+            for j in range(ind, len(child)):
+                if not child[j]:
+                    child[j] = item
+                    ind += 1
+                    break
+    return child
 
 if __name__ == '__main__':
     inputFile = sys.argv[1]
@@ -144,7 +81,8 @@ if __name__ == '__main__':
     file.close()
 
     print(time, inputFile, outputFile)
-    cost, tour = tspGenetic(allNodes, outputFile, time)
+    genU = GeneticUtil(allNodes)
+    cost, tour = tspGenetic(genU, outputFile, time)
 
     file = open(outputFile, 'w')
     file.write(str(cost)+'\n')
