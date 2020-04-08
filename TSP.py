@@ -52,7 +52,6 @@ class GeneticUtil(object):
 	    temp = path[rand1]
 	    path[rand1] = path[rand2]
 	    path[rand2] = temp
-	    return path
 
 	# alt func: mutates gene where rand1 is highes cost node
 	def mutatedGene2(self, path, ntCL):
@@ -64,7 +63,6 @@ class GeneticUtil(object):
 	    temp = path[rand1]
 	    path[rand1] = path[rand2]
 	    path[rand2] = temp
-	    return path
 
 	def createGnome(self):
 	    gnome = [1]

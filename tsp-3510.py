@@ -3,12 +3,11 @@ import sys
 import time
 from TSP import GeneticUtil
 
-POP_SIZE = 10
-NUM_GENS = 100
-elitism = 1
+POP_SIZE = 20
+NUM_GENS = 30000
+elitism = 5
 
-numMutes = 1
-prob_thresh = 0.001
+show = 100
 
 def tspGenetic(genU, outputFile, time):
 
@@ -18,47 +17,58 @@ def tspGenetic(genU, outputFile, time):
         tour = genU.createGnome()
         population[i] = [tour, genU.get_cost(tour)]
 
-
-    temp = 10000
-
     for gen in range(NUM_GENS):
         population.sort(key=lambda x: x[1])
-        print(f"\nGeneration: {gen}")
-        print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
+        if gen % show == 0:
+            print(f"\nGeneration: {gen}")
+            print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
         if elitism:
             newPop[:elitism] = population[:elitism]
 
         for i in range(elitism, POP_SIZE):
-            p1 = population[i][0]
+            if np.random.randint(10) >= 7:
+                p1 = tournyWinner(population)
+            else:
+                p1 = tournyElite(population)
 
+            p2 = tournyWinner(population)
 
-            while(True):
-                new_tour = genU.mutatedGene(p1)
-                for j in range(numMutes):
-                    new_tour = genU.mutatedGene(new_tour)
-                ntF = genU.get_cost(new_tour)
-                # ntF, ntCL = get_cost2(new_tour, dists)
+            child = breed(p1, p2)
+            newPop[i] = [child, genU.get_cost(child)]
 
-                # if ntF <= np.max(np.array(population)[:, 1]):
-                if ntF <= population[i][1]:
-                    newPop[i] = [new_tour, ntF]
-                    break
+        for i in range(elitism, POP_SIZE):
+            genU.mutatedGene(newPop[i][0])
+            newPop[i][1] = genU.get_cost(newPop[i][0])
 
-        temp = np.round(temp * 0.9)
         population = np.array(newPop).tolist()
-        gen += 1
 
     population.sort(key=lambda x: x[1])
     print(f"Min tour cost: {population[0][1]}")
     print(f"Tour:\n{population[0][0]}")
 
-    return cost, population[0][0]
+    return population[0]
 
 
-def breed(p1, p2, child):
+def breed(p1, p2):
     ind = 0
+
+    child = [0 for _ in p1]
+    child[0] = 1
+    child[-1] = 1
+
+    n = len(child) - 1
+    rand1 = np.random.randint(1, n)
+    rand2 = np.random.randint(1, n)
+
+    while abs(rand2 - rand1) < 3:
+        rand2 = np.random.randint(1, n)
+
+    startN = min(rand1, rand2)
+    endN = max(rand1, rand2)
+    child[startN:endN] = p1[startN:endN]
+
     for item in p2:
         if item not in child:
             for j in range(ind, len(child)):
@@ -68,12 +78,33 @@ def breed(p1, p2, child):
                     break
     return child
 
+def tournyWinner(pop):
+    tourny = []
+
+    for i in range(len(pop)):
+        randI  = np.random.randint(0, len(pop))
+        tourny.append(pop[randI])
+
+    tourny.sort(key=lambda x: x[1])
+
+    return tourny[0][0]
+
+def tournyElite(pop):
+    tourny = []
+
+    for i in range(elitism):
+        randI  = np.random.randint(0, elitism)
+        tourny.append(pop[randI])
+
+    tourny.sort(key=lambda x: x[1])
+
+    return tourny[0][0]
+
 if __name__ == '__main__':
     inputFile = sys.argv[1]
     outputFile = sys.argv[2]
     time = sys.argv[3]
     allNodes = []
-    # cost = None
     file = open(inputFile, 'r')
     for line in file:
         fields = line.split(" ")
@@ -82,7 +113,7 @@ if __name__ == '__main__':
 
     print(time, inputFile, outputFile)
     genU = GeneticUtil(allNodes)
-    cost, tour = tspGenetic(genU, outputFile, time)
+    tour, cost = tspGenetic(genU, outputFile, time)
 
     file = open(outputFile, 'w')
     file.write(str(cost)+'\n')
