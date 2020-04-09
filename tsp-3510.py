@@ -6,22 +6,44 @@ from TSP import GeneticUtil
 POP_SIZE = 20
 NUM_GENS = 30000
 elitism = 5
+mutationRate = 0.05
+tournySize = 10
 
-show = 100
+show = 1
 
 def tspGenetic(genU, outputFile, time):
 
-    population = [[[],None] for _ in range(POP_SIZE)]
+    # population = [[[],None] for _ in range(POP_SIZE)]
 
-    for i in range(POP_SIZE):
-        tour = genU.createGnome()
-        population[i] = [tour, genU.get_cost(tour)]
+    start = genU.onlyMins()
+    cS = genU.get_cost(start)
+
+    print(f"start:\n{start}")
+    print(f"cost: {cS}")
+
+    # end, cost = genU.two_opt([start, cS])
+
+    # print(f"end:\n{end}")
+    # print(f"cost: {cS}")
+    # return end, cost
+
+    population = [[start,cS] for _ in range(POP_SIZE)]
+
+    for i in range(1, POP_SIZE):
+        genU.mutatedGeneLoop(population[i][0], mutationRate)
+        population[i][1] = genU.get_cost(population[i][0])
+
+    # for i in range(POP_SIZE):
+    #     tour = genU.createGnome()
+    #     population[i] = [tour, genU.get_cost(tour)]
 
     for gen in range(NUM_GENS):
         population.sort(key=lambda x: x[1])
         if gen % show == 0:
             print(f"\nGeneration: {gen}")
             print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
+            print(f"worst cost: {population[-1][1]}\n")
+
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
         if elitism:
@@ -29,18 +51,21 @@ def tspGenetic(genU, outputFile, time):
 
         for i in range(elitism, POP_SIZE):
             if np.random.randint(10) >= 7:
-                p1 = tournyWinner(population)
+                p1 = tournyWinner(population, tournySize)
             else:
                 p1 = tournyElite(population)
 
-            p2 = tournyWinner(population)
+            # p1 = tournyWinner(population, tournySize)
+            p2 = tournyWinner(population, tournySize)
 
             child = breed(p1, p2)
             newPop[i] = [child, genU.get_cost(child)]
 
         for i in range(elitism, POP_SIZE):
-            genU.mutatedGene(newPop[i][0])
-            newPop[i][1] = genU.get_cost(newPop[i][0])
+            genU.mutatedGeneLoop(newPop[i][0], mutationRate)
+            # newPop[i][1] = genU.get_cost(newPop[i][0])
+            newPop[i] = genU.two_opt(newPop[i])
+
 
         population = np.array(newPop).tolist()
 
@@ -78,11 +103,11 @@ def breed(p1, p2):
                     break
     return child
 
-def tournyWinner(pop):
+def tournyWinner(pop, tSize):
     tourny = []
 
-    for i in range(len(pop)):
-        randI  = np.random.randint(0, len(pop))
+    for i in range(tSize):
+        randI  = np.random.randint(0, len(pop) - elitism)
         tourny.append(pop[randI])
 
     tourny.sort(key=lambda x: x[1])
