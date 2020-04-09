@@ -1,17 +1,19 @@
 import numpy as np
 import sys
 import time
+# from timeit import default_timer as timer
 from TSP import GeneticUtil
 
 POP_SIZE = 20
-NUM_GENS = 30000
 elitism = 5
 mutationRate = 0.05
 tournySize = 10
 
 show = 1
 
-def tspGenetic(genU, outputFile, time):
+time_start = time.perf_counter()
+
+def tspGenetic(genU, outputFile, timeout):
     start = genU.onlyMins()
     cS = genU.get_cost(start)
 
@@ -21,12 +23,26 @@ def tspGenetic(genU, outputFile, time):
         genU.mutatedGeneLoop(population[i][0], mutationRate)
         population[i][1] = genU.get_cost(population[i][0])
 
-    for gen in range(NUM_GENS):
+    gen = 0
+    prevBestCost = min(np.array(population)[:, 1])
+    sameCounter = -1
+
+    # timeout functionality implemented in this while loop
+    while sameCounter < 10 and time.perf_counter() - time_start < timeout - 1:
+        print (f'time elaped: {time.perf_counter() - time_start: 0.4f}')
         population.sort(key=lambda x: x[1])
+        if prevBestCost == population[0][1]:
+            sameCounter += 1
+        else:
+            sameCounter = 0
+        # print(f"sameCounter: {sameCounter}")
+
         if gen % show == 0:
             print(f"\nGeneration: {gen}")
-            print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
-            print(f"worst cost: {population[-1][1]}\n")
+            print(f"Best:  cost: {population[0][1]}")
+            print(f"sameCounter: {sameCounter}")
+            # print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
+            # print(f"worst cost: {population[-1][1]}\n")
 
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
@@ -48,13 +64,15 @@ def tspGenetic(genU, outputFile, time):
             genU.mutatedGeneLoop(newPop[i][0], mutationRate)
             newPop[i] = genU.two_opt(newPop[i])
 
-
+        prevBestCost = population[0][1]
         population = np.array(newPop).tolist() # creates shallow copy
+        gen += 1
 
     population.sort(key=lambda x: x[1])
     print(f"Min tour cost: {population[0][1]}")
     print(f"Tour:\n{population[0][0]}")
 
+    print (f'END time elaped: {time.perf_counter() - time_start: 0.4f}')
     return population[0]
 
 # creates a child where child[rand1:rand2] is a segement from parent1 (p1)
@@ -118,7 +136,7 @@ def tournyElite(pop):
 if __name__ == '__main__':
     inputFile = sys.argv[1]
     outputFile = sys.argv[2]
-    time = sys.argv[3]
+    timeout = int(sys.argv[3])
     allNodes = []
     file = open(inputFile, 'r')
     for line in file:
@@ -126,9 +144,9 @@ if __name__ == '__main__':
         allNodes.append((float(fields[1]),float(fields[2])))
     file.close()
 
-    print(time, inputFile, outputFile)
+    print(timeout, inputFile, outputFile)
     genU = GeneticUtil(allNodes)
-    tour, cost = tspGenetic(genU, outputFile, time)
+    tour, cost = tspGenetic(genU, outputFile, timeout)
 
     file = open(outputFile, 'w')
     file.write(str(cost)+'\n')
