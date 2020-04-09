@@ -3,9 +3,11 @@ import random
 from scipy.spatial.distance import pdist
 
 class GeneticUtil(object):
-	"""docstring for TSP"""
+	"""
+		Here are a list of functiions which help solve the TSP problem
+		with a genetic algorithm
+	"""
 	def __init__(self, allNodes):
-		# super(TSP, self).__init__()
 		self.numNodes = len(allNodes)
 		self.dists = np.round(pdist(allNodes))
 
@@ -27,22 +29,7 @@ class GeneticUtil(object):
 
 		return cost
 
-	# alternate func: returns list with costs per node
-	def get_cost2(self, tour):
-		cost = 0
-		costlist = [0 for _ in range(len(tour))]
-		for i in range(len(tour) - 1):
-			val = self.get_pdist(tour[i], tour[i+1])
-			cost += val
-			costlist[i] += val
-			costlist[i+1] += val
-
-		costlist[0] = 0
-		costlist[-1] = 0
-
-		return cost, costlist
-
-	#returns a randomly mutated path
+	# returns a randomly mutated path
 	def mutatedGene(self, path):
 		n = len(path) - 1
 		rand1 = np.random.randint(1, n)
@@ -53,7 +40,8 @@ class GeneticUtil(object):
 		path[rand1] = path[rand2]
 		path[rand2] = temp
 
-	#returns a randomly mutated path
+	# returns a randomly mutated path, where there
+	# is a mutationRate chance of changing each node for another
 	def mutatedGeneLoop(self, path, mutationRate):
 		n = len(path) - 1
 		for pos1 in range(1, n):
@@ -65,17 +53,8 @@ class GeneticUtil(object):
 				path[pos1] = path[pos2]
 				path[pos2] = temp
 
-	# alt func: mutates gene where rand1 is highes cost node
-	def mutatedGene2(self, path, ntCL):
-		n = len(path) - 1
-		rand1 = np.argmax(ntCL)
-		rand2 = np.random.randint(1, n)
-		while(rand1 == rand2):
-			rand2 = np.random.randint(1, n)
-		temp = path[rand1]
-		path[rand1] = path[rand2]
-		path[rand2] = temp
-
+	# depricated
+	# 	initializes a random order tour
 	def createGnome(self):
 		gnome = [1]
 		rem = np.arange(1, self.numNodes) + 1
@@ -94,7 +73,6 @@ class GeneticUtil(object):
 		rem = np.arange(1, self.numNodes) + 1
 
 		while len(rem):
-			# print(path)
 			cost = None
 			nextNode = None
 			for ind, j in enumerate(rem):
@@ -110,31 +88,36 @@ class GeneticUtil(object):
 				path.append(rem[0])
 				rem = np.delete(rem, 0)
 
-		path.append(1)
-		# print(path)
-		# print(get_cost(path, dists))
+		path.append(path[0])
 		return path
 
+	# performs 2-opt for a given tour and recalculates cost
+	# 	tour = gene[0]
+	# 	cost = gene[1]
 	def two_opt(self, gene):
-		route = np.array(gene[0]).tolist()
-		costR = gene[1] + 0
-		best = np.array(route).tolist()
-		improved = True
-		while improved:
-			improved = False
-			for i in range(1, len(route)-2):
-				for j in range(i+1, len(route)):
+		tour = np.array(gene[0]).tolist() # creates shallow copy
+		costR = gene[1]
+		winner = np.array(tour).tolist()
+
+		cheaper = True
+		while cheaper:
+			cheaper = False
+
+			for i in range(1, len(tour)-2):
+				for j in range(i+1, len(tour)):
 					if j-i == 1:
-						continue # changes nothing, skip then
-					new_route = np.array(route).tolist()
-					new_route[i:j] = route[j-1:i-1:-1] # this is the 2woptSwap
-					new_route_cost = self.get_cost(new_route)
-					if new_route_cost < costR:
-						best = new_route
-						costR = new_route_cost
-						improved = True
-			route = best
-		return best, costR
+						continue
+					new_tour = np.array(tour).tolist()
+					new_tour[i:j] = tour[j-1:i-1:-1] # swap with 2-opt (reverse path between nodes)
+					new_tour_cost = self.get_cost(new_tour)
+					if new_tour_cost < costR:
+						winner = new_tour
+						costR = new_tour_cost
+						cheaper = True
+
+			tour = np.array(winner).tolist()
+
+		return winner, costR
 
 
 def memoize(f):

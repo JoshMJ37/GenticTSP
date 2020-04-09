@@ -12,30 +12,14 @@ tournySize = 10
 show = 1
 
 def tspGenetic(genU, outputFile, time):
-
-    # population = [[[],None] for _ in range(POP_SIZE)]
-
     start = genU.onlyMins()
     cS = genU.get_cost(start)
-
-    print(f"start:\n{start}")
-    print(f"cost: {cS}")
-
-    # end, cost = genU.two_opt([start, cS])
-
-    # print(f"end:\n{end}")
-    # print(f"cost: {cS}")
-    # return end, cost
 
     population = [[start,cS] for _ in range(POP_SIZE)]
 
     for i in range(1, POP_SIZE):
         genU.mutatedGeneLoop(population[i][0], mutationRate)
         population[i][1] = genU.get_cost(population[i][0])
-
-    # for i in range(POP_SIZE):
-    #     tour = genU.createGnome()
-    #     population[i] = [tour, genU.get_cost(tour)]
 
     for gen in range(NUM_GENS):
         population.sort(key=lambda x: x[1])
@@ -50,12 +34,11 @@ def tspGenetic(genU, outputFile, time):
             newPop[:elitism] = population[:elitism]
 
         for i in range(elitism, POP_SIZE):
-            if np.random.randint(10) >= 7:
+            if not elitism or np.random.randint(10) >= 7:
                 p1 = tournyWinner(population, tournySize)
             else:
                 p1 = tournyElite(population)
 
-            # p1 = tournyWinner(population, tournySize)
             p2 = tournyWinner(population, tournySize)
 
             child = breed(p1, p2)
@@ -63,11 +46,10 @@ def tspGenetic(genU, outputFile, time):
 
         for i in range(elitism, POP_SIZE):
             genU.mutatedGeneLoop(newPop[i][0], mutationRate)
-            # newPop[i][1] = genU.get_cost(newPop[i][0])
             newPop[i] = genU.two_opt(newPop[i])
 
 
-        population = np.array(newPop).tolist()
+        population = np.array(newPop).tolist() # creates shallow copy
 
     population.sort(key=lambda x: x[1])
     print(f"Min tour cost: {population[0][1]}")
@@ -75,7 +57,9 @@ def tspGenetic(genU, outputFile, time):
 
     return population[0]
 
-
+# creates a child where child[rand1:rand2] is a segement from parent1 (p1)
+# and the rest of child are the in-order nodes from parent2 (p2) that are not
+# already in child
 def breed(p1, p2):
     ind = 0
 
@@ -103,6 +87,9 @@ def breed(p1, p2):
                     break
     return child
 
+# creates a matingPool from random tours in population,
+# then selects and returns most fit of random matingPool
+# to be the returned parent
 def tournyWinner(pop, tSize):
     tourny = []
 
@@ -114,6 +101,9 @@ def tournyWinner(pop, tSize):
 
     return tourny[0][0]
 
+# creates a matingPool from elite tours in population,
+# then selects and returns most fit of elite matingPool
+# to be the returned parent
 def tournyElite(pop):
     tourny = []
 
