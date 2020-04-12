@@ -100,30 +100,29 @@ class GeneticUtil(object):
 		path.append(path[0])
 		return path
 
-	# performs 2-opt for a given tour and recalculates cost
+	# performs modified 2-opt for a given tour and recalculates cost
 	# 	tour = gene[0]
-	# 	cost = gene[1]
 	def two_opt(self, gene):
-		winner = np.array(gene[0]).tolist()
-		n = len(winner)
+		tour = np.array(gene[0]).tolist()
+		n = len(tour)
 
 		for i in range(1, n-2):
 			for j in range(i+1, n):
 				if j%100 == 0 and time.perf_counter() - self.time_start > self.timeout:
-					return winner, self.get_cost(winner)
+					return tour, self.get_cost(tour)
 				if j-i <= 1:
 					continue
 
-				new_sect_cost = self.get_pdist(winner[i-1], winner[j-1])
-				new_sect_cost += self.get_pdist(winner[i], winner[j])
+				new_sect_cost = self.get_pdist(tour[i-1], tour[j-1])
+				new_sect_cost += self.get_pdist(tour[i], tour[j])
 
-				old_sect_cost = self.get_pdist(winner[i-1], winner[i])
-				old_sect_cost += self.get_pdist(winner[j-1], winner[j])
+				old_sect_cost = self.get_pdist(tour[i-1], tour[i])
+				old_sect_cost += self.get_pdist(tour[j-1], tour[j])
 
 				if new_sect_cost < old_sect_cost:
-					winner[i:j] = winner[j-1:i-1:-1]
+					tour[i:j] = tour[j-1:i-1:-1]
 
-		return winner, self.get_cost(winner)
+		return tour, self.get_cost(tour)
 
 
 def memoize(f):

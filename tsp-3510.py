@@ -5,14 +5,14 @@ import time
 # import file below was made by us (please look at TSP.py in zip)
 from TSP import GeneticUtil
 
-POP_SIZE = 40
+POP_SIZE = 20
 elitism = 4
 mutationRate = 0.015
 tournySize = 10
 
 show = 1
 counterThresh = 100
-citiesN = 1000
+citiesN = 0
 # np.random.seed(3)
 
 def tspGenetic(genU, outputFile, verbose=False):
@@ -25,7 +25,8 @@ def tspGenetic(genU, outputFile, verbose=False):
 
     for i in range(1, POP_SIZE):
         genU.mutatedGeneLoop(population[i][0], mutationRate)
-        population[i][1] = genU.get_cost(population[i][0])
+        population[i] = genU.two_opt(population[i])
+        # population[i][1] = genU.get_cost(population[i][0])
 
     gen = 0
     prevBestCost = min(np.array(population)[:, 1])
@@ -41,9 +42,9 @@ def tspGenetic(genU, outputFile, verbose=False):
 
         if verbose and gen % show == 0:
             print(f"\nGeneration: {gen}")
-            print(f"Best:  cost: {population[0][1]}")
-            print(f"sameCounter: {sameCounter}")
-            print (f'time elaped: {time.perf_counter() - genU.time_start: 0.4f}')
+            print(f"Best   cost: {population[0][1]}")
+            # print(f"sameCounter: {sameCounter}")
+            print(f'time elaped: {time.perf_counter() - genU.time_start: 0.4f}')
 
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
