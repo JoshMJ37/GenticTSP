@@ -1,6 +1,8 @@
 Names:
-    Joshua Martin-Jaffe
-    Cecilia Liu
+    Joshua Martin-Jaffe,    jmjaffe37@gatech.edu
+    Cecilia Liu,            jliu738@gatech.edu
+
+    submitted:      04/16
 
 Files:
     tsp-3510.py:
