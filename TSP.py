@@ -1,15 +1,23 @@
 import numpy as np
+import time
 import random
 from scipy.spatial.distance import pdist
 
 class GeneticUtil(object):
 	"""
-		Here are a list of functiions which help solve the TSP problem
-		with a genetic algorithm
+		Here are a class with functiions which help solve the TSP problem
+		with a modified genetic algorithm
 	"""
-	def __init__(self, allNodes):
+	def __init__(self, allNodes, timeout):
 		self.numNodes = len(allNodes)
 		self.dists = np.round(pdist(allNodes))
+		self.time_start = time.perf_counter()
+		self.timeout = timeout - 2
+		# random.seed(7)
+
+		# fill out sumtorial memo so that max recursive depth is not reached
+		for i in range(min(300, self.numNodes), self.numNodes, 300):
+			sumtorial(i)
 
 	def get_pdist(self, n1, n2):
 		minNode = min(n1, n2)
@@ -47,8 +55,8 @@ class GeneticUtil(object):
 		for pos1 in range(1, n):
 			if random.random() < mutationRate:
 				pos2 = np.random.randint(1, n)
-				while(pos1 == pos2):
-					pos2 = np.random.randint(1, n)
+				# while(pos1 == pos2):
+				# 	pos2 = np.random.randint(1, n)
 				temp = path[pos1]
 				path[pos1] = path[pos2]
 				path[pos2] = temp
@@ -76,6 +84,7 @@ class GeneticUtil(object):
 			cost = None
 			nextNode = None
 			for ind, j in enumerate(rem):
+				# print(path[-1], j)
 				curr = self.get_pdist(path[-1], j)
 				if not cost or curr < cost:
 					cost = curr
@@ -95,29 +104,26 @@ class GeneticUtil(object):
 	# 	tour = gene[0]
 	# 	cost = gene[1]
 	def two_opt(self, gene):
-		tour = np.array(gene[0]).tolist() # creates shallow copy
-		costR = gene[1]
-		winner = np.array(tour).tolist()
+		winner = np.array(gene[0]).tolist()
+		n = len(winner)
 
-		cheaper = True
-		while cheaper:
-			cheaper = False
+		for i in range(1, n-2):
+			for j in range(i+1, n):
+				if j%100 == 0 and time.perf_counter() - self.time_start > self.timeout:
+					return winner, self.get_cost(winner)
+				if j-i <= 1:
+					continue
 
-			for i in range(1, len(tour)-2):
-				for j in range(i+1, len(tour)):
-					if j-i == 1:
-						continue
-					new_tour = np.array(tour).tolist()
-					new_tour[i:j] = tour[j-1:i-1:-1] # swap with 2-opt (reverse path between nodes)
-					new_tour_cost = self.get_cost(new_tour)
-					if new_tour_cost < costR:
-						winner = new_tour
-						costR = new_tour_cost
-						cheaper = True
+				new_sect_cost = self.get_pdist(winner[i-1], winner[j-1])
+				new_sect_cost += self.get_pdist(winner[i], winner[j])
 
-			tour = np.array(winner).tolist()
+				old_sect_cost = self.get_pdist(winner[i-1], winner[i])
+				old_sect_cost += self.get_pdist(winner[j-1], winner[j])
 
-		return winner, costR
+				if new_sect_cost < old_sect_cost:
+					winner[i:j] = winner[j-1:i-1:-1]
+
+		return winner, self.get_cost(winner)
 
 
 def memoize(f):

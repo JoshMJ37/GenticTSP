@@ -1,23 +1,27 @@
 import numpy as np
 import sys
 import time
-# from timeit import default_timer as timer
+
+# import file below was made by us (please look at TSP.py in zip)
 from TSP import GeneticUtil
 
-POP_SIZE = 20
-elitism = 5
-mutationRate = 0.05
+POP_SIZE = 40
+elitism = 4
+mutationRate = 0.015
 tournySize = 10
 
 show = 1
+counterThresh = 100
+citiesN = 1000
+# np.random.seed(3)
 
-time_start = time.perf_counter()
-
-def tspGenetic(genU, outputFile, timeout):
+def tspGenetic(genU, outputFile, verbose=False):
     start = genU.onlyMins()
     cS = genU.get_cost(start)
 
     population = [[start,cS] for _ in range(POP_SIZE)]
+    if verbose:
+        print(f"starting cost: {cS}")
 
     for i in range(1, POP_SIZE):
         genU.mutatedGeneLoop(population[i][0], mutationRate)
@@ -28,21 +32,18 @@ def tspGenetic(genU, outputFile, timeout):
     sameCounter = -1
 
     # timeout functionality implemented in this while loop
-    while sameCounter < 10 and time.perf_counter() - time_start < timeout - 1:
-        print (f'time elaped: {time.perf_counter() - time_start: 0.4f}')
+    while sameCounter < counterThresh and time.perf_counter() - genU.time_start < genU.timeout:
         population.sort(key=lambda x: x[1])
         if prevBestCost == population[0][1]:
             sameCounter += 1
         else:
             sameCounter = 0
-        # print(f"sameCounter: {sameCounter}")
 
-        if gen % show == 0:
+        if verbose and gen % show == 0:
             print(f"\nGeneration: {gen}")
             print(f"Best:  cost: {population[0][1]}")
             print(f"sameCounter: {sameCounter}")
-            # print(f"Best:\n  cost: {population[0][1]}\n  tour: {population[0][0]}")
-            # print(f"worst cost: {population[-1][1]}\n")
+            print (f'time elaped: {time.perf_counter() - genU.time_start: 0.4f}')
 
         newPop = [[[],None] for _ in range(POP_SIZE)]
 
@@ -69,10 +70,10 @@ def tspGenetic(genU, outputFile, timeout):
         gen += 1
 
     population.sort(key=lambda x: x[1])
-    print(f"Min tour cost: {population[0][1]}")
-    print(f"Tour:\n{population[0][0]}")
 
-    print (f'END time elaped: {time.perf_counter() - time_start: 0.4f}')
+    if verbose:
+        print(f"Min tour cost: {population[0][1]}")
+        print (f'END time elaped: {time.perf_counter() - genU.time_start: 0.4f}')
     return population[0]
 
 # creates a child where child[rand1:rand2] is a segement from parent1 (p1)
@@ -137,6 +138,12 @@ if __name__ == '__main__':
     inputFile = sys.argv[1]
     outputFile = sys.argv[2]
     timeout = int(sys.argv[3])
+
+    verbose = False
+    if len(sys.argv) >= 5:
+        if sys.argv[4].lower() in ['true', '1', 't', 'y']:
+            verbose = True
+
     allNodes = []
     file = open(inputFile, 'r')
     for line in file:
@@ -144,9 +151,17 @@ if __name__ == '__main__':
         allNodes.append((float(fields[1]),float(fields[2])))
     file.close()
 
-    print(timeout, inputFile, outputFile)
-    genU = GeneticUtil(allNodes)
-    tour, cost = tspGenetic(genU, outputFile, timeout)
+    # Useful for scale testing
+    # Adds cities with random coordinates until we have citiesN cities
+    if citiesN > len(allNodes):
+        for i in range(citiesN - len(allNodes)):
+            rand1 = np.random.randint(1, 30000)
+            rand2 = np.random.randint(1, 30000)
+
+            allNodes.append((rand1, rand2))
+
+    genU = GeneticUtil(allNodes, timeout)
+    tour, cost = tspGenetic(genU, outputFile, verbose=verbose)
 
     file = open(outputFile, 'w')
     file.write(str(cost)+'\n')
