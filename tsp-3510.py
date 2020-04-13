@@ -5,14 +5,16 @@ import time
 # import file below was made by us (please look at TSP.py in zip)
 from TSP import GeneticUtil
 
+# main global variables
 POP_SIZE = 20
 elitism = 4
 mutationRate = 0.015
 tournySize = 10
-
-show = 1
 counterThresh = 100
-citiesN = 0
+
+# for verbose and debugging purposes
+show = 1
+citiesN = 0 # used to add aditional, random cities up this number
 # np.random.seed(3)
 
 def tspGenetic(genU, outputFile, verbose=False):

@@ -18,12 +18,21 @@ Files:
         in our genetic algorithm. This class also holds a lot of the data
         about the algorithm so it doesn't have to be passed in each time.
 
-    __init__.py:
-        Standard python file that allows imports from same folder
-
     algorithm.pdf:
         PDF document which describes our algorithm in more depth and
         explains the rationale behind the design.
+
+    __init__.py:
+        Standard python file that allows imports from same folder
+
+Compilation:
+
+    Dependencies:
+        imports:    numpy
+                    scipy
+                    time
+                    random
+                    sys
 
 Running:
     example command line input:

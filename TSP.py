@@ -37,6 +37,7 @@ class GeneticUtil(object):
 
 		return cost
 
+	# deprecated
 	# returns a randomly mutated path
 	def mutatedGene(self, path):
 		n = len(path) - 1
@@ -61,7 +62,7 @@ class GeneticUtil(object):
 				path[pos1] = path[pos2]
 				path[pos2] = temp
 
-	# depricated
+	# deprecated
 	# 	initializes a random order tour
 	def createGnome(self):
 		gnome = [1]
@@ -120,7 +121,7 @@ class GeneticUtil(object):
 				old_sect_cost += self.get_pdist(tour[j-1], tour[j])
 
 				if new_sect_cost < old_sect_cost:
-					tour[i:j] = tour[j-1:i-1:-1]
+					tour[i:j] = tour[j-1:i-1:-1] # 2-opt swap
 
 		return tour, self.get_cost(tour)
 
